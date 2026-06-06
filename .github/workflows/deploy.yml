@@ -1,4 +1,4 @@
-name: Deploy Vite Site to Pages
+name: Deploy Static Site
 
 on:
   push:
@@ -10,55 +10,17 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Clean Replit & Workspace Garbage (升级版清洗)
-        run: |
-          node -e "
-          const fs = require('fs');
-          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          ['dependencies', 'devDependencies'].forEach(d => {
-            if(pkg[d]){
-              for(let k in pkg[d]){
-                if(k.startsWith('@replit') || k.startsWith('@workspace')) delete pkg[d][k];
-                else if(pkg[d][k].startsWith('catalog:') || pkg[d][k].startsWith('workspace:')) pkg[d][k] = 'latest';
-              }
-            }
-          });
-          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-          "
-
-      - name: Install pnpm
-        run: npm install -g pnpm@latest
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Build
-        run: npx vite build
-
-      - name: Upload artifact
+      - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: '.'  # 直接发布整个仓库根目录
 
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
