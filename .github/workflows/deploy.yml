@@ -24,12 +24,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node (升级至 Node 22，消灭黄灯警告)
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Clean Replit Garbage (自动扫描并清洗环境垃圾)
+      - name: Clean Replit & Workspace Garbage (升级版清洗)
         run: |
           node -e "
           const fs = require('fs');
@@ -37,7 +37,7 @@ jobs:
           ['dependencies', 'devDependencies'].forEach(d => {
             if(pkg[d]){
               for(let k in pkg[d]){
-                if(k.startsWith('@replit')) delete pkg[d][k];
+                if(k.startsWith('@replit') || k.startsWith('@workspace')) delete pkg[d][k];
                 else if(pkg[d][k].startsWith('catalog:') || pkg[d][k].startsWith('workspace:')) pkg[d][k] = 'latest';
               }
             }
@@ -48,10 +48,10 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm@latest
 
-      - name: Install dependencies (无视锁文件冲突)
+      - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build (直接暴力打包，规避语法检查报错)
+      - name: Build
         run: npx vite build
 
       - name: Upload artifact
